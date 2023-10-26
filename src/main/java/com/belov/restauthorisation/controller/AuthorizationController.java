@@ -6,9 +6,11 @@ import com.belov.restauthorisation.model.Authorities;
 import com.belov.restauthorisation.model.User;
 import com.belov.restauthorisation.resolver.UserParam;
 import com.belov.restauthorisation.service.AuthorizationService;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@Validated
 public class AuthorizationController {
     private AuthorizationService service;
 
@@ -25,7 +28,7 @@ public class AuthorizationController {
     }
 
     @GetMapping("/authorize")
-    public List<Authorities> getUserAuthorities(@UserParam User user) {
+    public List<Authorities> getUserAuthorities(@UserParam @Valid User user) {
         return service.getAuthorities(user);
     }
 
@@ -38,5 +41,10 @@ public class AuthorizationController {
     public ResponseEntity<String> InvalidCredentialsHandler(UnauthorizedUser uue) {
         System.out.printf(uue.getMessage());
         return new ResponseEntity<>(uue.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> invalidCredentialsHandler(ConstraintViolationException cve) {
+        return new ResponseEntity<>("слишком короткое или длинное имя пользователя/пароль", HttpStatus.BAD_REQUEST);
     }
 }
